@@ -1,0 +1,272 @@
+-- Delta Executor K - Roblox GUI Script
+-- Funcionalidades: Salvar posição, Teleguiado, ESP, TP Base, Mini GUI Reabrir
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Remover GUI anterior se existir
+if playerGui:FindFirstChild("MiranhaHubGUI") then
+    playerGui:FindFirstChild("MiranhaHubGUI"):Destroy()
+end
+
+-- Variáveis globais
+local savedPosition = nil
+local character = player.Character or player.CharacterAdded:Wait()
+local espEnabled = false
+
+-- Criar ScreenGui principal
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MiranhaHubGUI"
+screenGui.Parent = playerGui
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Frame principal
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Parent = screenGui
+mainFrame.Size = UDim2.new(0, 320, 0, 240)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -120)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
+
+-- Header
+local headerFrame = Instance.new("Frame")
+headerFrame.Name = "Header"
+headerFrame.Parent = mainFrame
+headerFrame.Size = UDim2.new(1, 0, 0, 50)
+headerFrame.Position = UDim2.new(0, 0, 0, 0)
+headerFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+headerFrame.BorderSizePixel = 0
+headerFrame.Active = true
+headerFrame.Draggable = true
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 12)
+headerCorner.Parent = headerFrame
+
+-- Logo
+local logoLabel = Instance.new("TextLabel")
+logoLabel.Parent = headerFrame
+logoLabel.Size = UDim2.new(0, 40, 0, 40)
+logoLabel.Position = UDim2.new(0, 10, 0, 5)
+logoLabel.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+logoLabel.Text = "🕷️"
+logoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+logoLabel.TextSize = 24
+logoLabel.Font = Enum.Font.GothamBold
+logoLabel.BorderSizePixel = 0
+
+local logoCorner = Instance.new("UICorner")
+logoCorner.CornerRadius = UDim.new(0.5, 0)
+logoCorner.Parent = logoLabel
+
+-- Título
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Parent = headerFrame
+titleLabel.Size = UDim2.new(1, -120, 0, 20)
+titleLabel.Position = UDim2.new(0, 60, 0, 5)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "MIRANHA HUB🕷️"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Subtítulo
+local subtitleLabel = Instance.new("TextLabel")
+subtitleLabel.Parent = headerFrame
+subtitleLabel.Size = UDim2.new(1, -120, 0, 12)
+subtitleLabel.Position = UDim2.new(0, 60, 0, 25)
+subtitleLabel.BackgroundTransparency = 1
+subtitleLabel.Text = "by MiranhaHub"
+subtitleLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+subtitleLabel.TextSize = 12
+subtitleLabel.Font = Enum.Font.GothamSemibold
+subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Botão fechar
+local closeButton = Instance.new("TextButton")
+closeButton.Parent = headerFrame
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -40, 0, 10)
+closeButton.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+closeButton.Text = "✕"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextSize = 16
+closeButton.Font = Enum.Font.GothamBold
+closeButton.BorderSizePixel = 0
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0.5, 0)
+closeCorner.Parent = closeButton
+
+-- Função botão estilizado
+local function createDeltaButton(text, position, size, color, parent)
+    local button = Instance.new("TextButton")
+    button.Size = size
+    button.Position = position
+    button.BackgroundColor3 = color
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 14
+    button.Font = Enum.Font.GothamSemibold
+    button.BorderSizePixel = 0
+    button.Parent = parent
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = button
+    return button
+end
+
+-- Função segura de personagem
+local function getCharacterSafely()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        return player.Character
+    end
+    return nil
+end
+
+-- BOTÃO SALVAR
+local saveButton = createDeltaButton("💾 SALVAR", UDim2.new(0, 20, 0, 70), UDim2.new(0, 130, 0, 45), Color3.fromRGB(50, 150, 50), mainFrame)
+saveButton.MouseButton1Click:Connect(function()
+    local currentChar = getCharacterSafely()
+    if not currentChar then return end
+    savedPosition = currentChar.HumanoidRootPart.CFrame
+    saveButton.Text = "✅ SALVO!"
+    task.wait(2)
+    saveButton.Text = "💾 SALVAR"
+end)
+
+-- BOTÃO TELEGUIADO
+local teleButton = createDeltaButton("🎯 TELEGUIADO", UDim2.new(0, 170, 0, 70), UDim2.new(0, 130, 0, 45), Color3.fromRGB(100, 50, 200), mainFrame)
+teleButton.MouseButton1Click:Connect(function()
+    if not savedPosition then
+        teleButton.Text = "❌ SEM SAVE!"
+        task.wait(2)
+        teleButton.Text = "🎯 TELEGUIADO"
+        return
+    end
+    local currentChar = getCharacterSafely()
+    if not currentChar then return end
+    local humanoidRootPart = currentChar.HumanoidRootPart
+    local distance = (savedPosition.Position - humanoidRootPart.Position).Magnitude
+    local tweenTime = math.min(distance / 40, 8)
+    local moveTween = TweenService:Create(humanoidRootPart, TweenInfo.new(tweenTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {CFrame = savedPosition})
+    moveTween:Play()
+    teleButton.Text = "🚀 INDO..."
+    moveTween.Completed:Wait()
+    teleButton.Text = "✅ CHEGOU!"
+    task.wait(2)
+    teleButton.Text = "🎯 TELEGUIADO"
+end)
+
+-- BOTÃO ESP
+local espButton = createDeltaButton("🔴 ESP", UDim2.new(0, 20, 0, 130), UDim2.new(0, 130, 0, 40), Color3.fromRGB(200, 50, 50), mainFrame)
+espButton.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espButton.Text = espEnabled and "✅ ESP ON" or "🔴 ESP"
+end)
+
+-- Sistema ESP
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= player and plr.Character and plr.Character:FindFirstChild("Head") then
+                local head = plr.Character.Head
+                if not head:FindFirstChild("ESP") then
+                    local bill = Instance.new("BillboardGui")
+                    bill.Name = "ESP"
+                    bill.Adornee = head
+                    bill.Size = UDim2.new(0, 100, 0, 20)
+                    bill.AlwaysOnTop = true
+                    bill.Parent = head
+                    local text = Instance.new("TextLabel", bill)
+                    text.Size = UDim2.new(1, 0, 1, 0)
+                    text.BackgroundTransparency = 1
+                    text.Text = plr.Name
+                    text.TextColor3 = Color3.fromRGB(255, 0, 0)
+                    text.TextStrokeTransparency = 0
+                    text.TextSize = 14
+                    text.Font = Enum.Font.GothamBold
+                end
+            end
+        end
+    else
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr.Character and plr.Character:FindFirstChild("Head") then
+                local esp = plr.Character.Head:FindFirstChild("ESP")
+                if esp then esp:Destroy() end
+            end
+        end
+    end
+end)
+
+-- BOTÃO TP BASE
+local tpButton = createDeltaButton("🌀 TP BASE", UDim2.new(0, 170, 0, 130), UDim2.new(0, 130, 0, 40), Color3.fromRGB(50, 120, 200), mainFrame)
+tpButton.MouseButton1Click:Connect(function()
+    local currentChar = getCharacterSafely()
+    if not currentChar then return end
+    local root = currentChar.HumanoidRootPart
+    root.CFrame = root.CFrame * CFrame.new(0, 0, -10)
+end)
+
+-- Status
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Parent = mainFrame
+statusLabel.Size = UDim2.new(1, -20, 0, 25)
+statusLabel.Position = UDim2.new(0, 10, 0, 180)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "🌊 Miranha Script Ativo - Movimento Suave"
+statusLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
+statusLabel.TextSize = 12
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Mini GUI (aparece quando fechar)
+local miniFrame = Instance.new("Frame")
+miniFrame.Name = "MiniFrame"
+miniFrame.Parent = screenGui
+miniFrame.Size = UDim2.new(0, 150, 0, 40)
+miniFrame.Position = UDim2.new(0.5, -75, 0.1, 0)
+miniFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+miniFrame.Visible = false
+miniFrame.Active = true
+miniFrame.Draggable = true
+
+local miniCorner = Instance.new("UICorner")
+miniCorner.CornerRadius = UDim.new(0, 10)
+miniCorner.Parent = miniFrame
+
+local miniButton = Instance.new("TextButton")
+miniButton.Parent = miniFrame
+miniButton.Size = UDim2.new(1, 0, 1, 0)
+miniButton.BackgroundTransparency = 1
+miniButton.Text = "Miranha HUB🕷️"
+miniButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+miniButton.TextSize = 16
+miniButton.Font = Enum.Font.GothamBold
+
+miniButton.MouseButton1Click:Connect(function()
+    miniFrame.Visible = false
+    mainFrame.Visible = true
+end)
+
+-- Fechar GUI
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    miniFrame.Visible = true
+end)
+
+-- Inicialização
+print("=== MIRANHA HUB🕷️ ===")
+print("✅ SALVAR / TELEGUIADO / ESP / TP BASE / MINI GUI carregados com sucesso!")
